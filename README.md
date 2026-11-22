@@ -41,6 +41,8 @@ For the cross-dataset test, put a second, independent KOA dataset in `data/exter
 
 ### 2. Train (GPU recommended: Kaggle or Colab T4/P100)
 
+Easiest: open [`notebooks/koa_ordnet_kaggle.ipynb`](notebooks/koa_ordnet_kaggle.ipynb) on Kaggle (File → Import Notebook → GitHub), turn on GPU and Internet, add the dataset as input, and Run All. Or from a shell:
+
 ```bash
 python train.py --loss ce        # baseline: ResNet-50 + cross-entropy
 python train.py --loss ordinal   # baseline: ordinal loss (Chen et al. style)
