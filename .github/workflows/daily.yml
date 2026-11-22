@@ -1,0 +1,41 @@
+name: Daily health check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "30 3 * * *"   # every day 09:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run tests (unit + synthetic end-to-end smoke run)
+        id: tests
+        run: |
+          set -o pipefail
+          python -m pytest -q 2>&1 | tee pytest.log
+      - name: Append to health log and commit (scheduled runs only)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p docs
+          [ -f docs/HEALTH_LOG.md ] || printf "# Automated health log\n\nDaily CI run: unit tests + 1-epoch smoke training on synthetic data.\n\n| Date (UTC) | Python | Torch | Tests |\n|---|---|---|---|\n" > docs/HEALTH_LOG.md
+          TORCH=$(python -c "import torch;print(torch.__version__)")
+          RESULT=$(tail -n 1 pytest.log)
+          echo "| $(date -u +%Y-%m-%d) | 3.12 | $TORCH | $RESULT |" >> docs/HEALTH_LOG.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/HEALTH_LOG.md
+          git commit -m "chore: daily health check $(date -u +%Y-%m-%d)"
+          git push
