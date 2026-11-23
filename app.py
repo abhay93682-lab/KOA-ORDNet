@@ -60,9 +60,19 @@ if model is None:
                "to `models/koa_ordnet.pt` or upload it in the sidebar.")
     st.stop()
 
+SAMPLES = sorted(Path("samples").glob("*.png"))  # test-set images from Chen (2018), CC BY 4.0
 img_file = st.file_uploader("Knee X-ray (PNG/JPG)", type=["png", "jpg", "jpeg"])
-if img_file:
-    gray = cv2.imdecode(np.frombuffer(img_file.getvalue(), np.uint8), cv2.IMREAD_GRAYSCALE)
+data = img_file.getvalue() if img_file else None
+true_grade = None
+if data is None and SAMPLES:
+    names = ["—"] + [p.stem for p in SAMPLES]
+    pick = st.selectbox("…or try a sample X-ray from the test set", names)
+    if pick != "—":
+        path = Path("samples") / f"{pick}.png"
+        data = path.read_bytes()
+        true_grade = int(pick.split("_")[0][2:])   # file names look like "KL3_9011053R"
+if data:
+    gray = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_GRAYSCALE)
     x = torch.from_numpy(preprocess(gray).transpose(2, 0, 1)).unsqueeze(0)
     with torch.no_grad():
         probs = logits_to_probs(model(x), head)[0].numpy()
@@ -70,7 +80,9 @@ if img_file:
     cam, grade = cam_fn(x)
     cam_fn.remove()
 
-    st.subheader(GRADE_TEXT[grade])
+    st.subheader(f"Predicted: {GRADE_TEXT[grade]}")
+    if true_grade is not None:
+        st.caption(f"Expert label for this sample: {GRADE_TEXT[true_grade]}")
     c1, c2 = st.columns(2)
     c1.image(cv2.resize(gray, (224, 224)), caption="Input", use_container_width=True)
     c2.image(overlay(cv2.resize(gray, (224, 224)), cam), caption="Grad-CAM (box = joint region)", use_container_width=True)

@@ -63,6 +63,11 @@ This writes `results/results.json` and `results/RESULTS.md`, with Table II (in-d
 
 ### 4. Demo
 
+**Live:** https://koa-ordnet.streamlit.app — upload a knee X-ray or pick one of the five sample images
+(the first test-set image of each KL grade from Chen, 2018, CC BY 4.0; the model gets 3 of the 5 right).
+
+Run it locally:
+
 ```bash
 mkdir models && cp runs/koa_ordnet/koa/best.pt models/koa_ordnet.pt
 streamlit run app.py
