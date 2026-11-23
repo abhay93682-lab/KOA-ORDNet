@@ -40,6 +40,15 @@ def test_inverse_freq_weights_favour_rare():
     assert w[4] > w[0]
 
 
+def test_list_split_accepts_named_grade_folders(tmp_path):
+    import cv2
+    from koa_ordnet.data import list_split
+    for g, name in enumerate(["0Normal", "1Doubtful", "2Mild", "3Moderate", "4Severe"]):
+        (tmp_path / name).mkdir()
+        cv2.imwrite(str(tmp_path / name / "a.png"), np.zeros((8, 8), np.uint8))
+    assert [g for _, g in list_split(tmp_path, None)] == [0, 1, 2, 3, 4]
+
+
 def test_metrics():
     m = compute_metrics([0, 1, 2, 3, 4], [0, 1, 2, 3, 4])
     assert m["accuracy"] == 1.0 and m["qwk"] == 1.0 and m["mae"] == 0.0 and m["grade34_recall"] == 1.0

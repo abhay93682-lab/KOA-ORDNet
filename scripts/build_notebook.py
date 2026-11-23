@@ -104,8 +104,13 @@ for loss in ['ce', 'ordinal', 'koa']:
         print(f'== {loss}: already trained, skipping'); continue
     print(f'== training {loss}')
     !python train.py --data "$DATA" --out "$RUNS" --loss $loss --workers 2"""),
-    ("markdown", "## Evaluate: Table II and Grad-CAM IoU, from the trained checkpoints"),
-    ("code", """!python evaluate.py --data "$DATA" --runs "$RUNS" --workers 2
+    ("markdown", """## Evaluate: Table II, Table III and Grad-CAM IoU, from the trained checkpoints
+External test set (RG3): *Digital Knee X-ray Images* (Gornale & Patravali, 2020, Mendeley Data,
+doi:10.17632/t9ndx37v5h.1), KL labels from Medical Expert I. It is never used for training or tuning."""),
+    ("code", """ext_root = kagglehub.dataset_download('tommyngx/digital-knee-xray')
+EXT = next(str(p) for p in Path(ext_root).rglob('MedicalExpert-I') if p.is_dir())
+print('EXT =', EXT)
+!python evaluate.py --data "$DATA" --runs "$RUNS" --external "$EXT" --workers 2
 !cp -r results "$SAVE"/
 !cp "$RUNS"/koa/best.pt "$SAVE"/koa_ordnet.pt
 print(open('results/RESULTS.md').read())

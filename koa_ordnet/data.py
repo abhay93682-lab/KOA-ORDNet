@@ -28,7 +28,10 @@ def list_split(root: str | Path, split: str | None, limit_per_class: int | None 
     base = Path(root) / split if split else Path(root)
     items = []
     for g in range(NUM_GRADES):
-        files = sorted(p for p in (base / str(g)).glob("*") if p.suffix.lower() in IMG_EXT)
+        # grade folders are "0".."4", or start with the grade digit (e.g. "0Normal", "3Moderate")
+        dirs = [d for d in base.iterdir() if d.is_dir() and (d.name == str(g) or
+                (d.name.startswith(str(g)) and not d.name[1:2].isdigit()))] if base.is_dir() else []
+        files = sorted(p for d in dirs for p in d.glob("*") if p.suffix.lower() in IMG_EXT)
         if limit_per_class:
             files = files[:limit_per_class]
         items += [(p, g) for p in files]
