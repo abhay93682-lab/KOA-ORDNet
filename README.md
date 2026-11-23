@@ -72,7 +72,17 @@ Upload a knee X-ray to get the KL grade, per-grade probabilities, the Grad-CAM h
 
 ## Results
 
-Results will be published in [`results/RESULTS.md`](results/) once the full training runs are complete. No numbers are reported here before then.
+Trained on Google Colab (T4). Test set: Chen (2018) `test/`, n = 1656. External set: Digital Knee X-ray Images (Gornale & Patravali, 2020), n = 1650. Full tables, per-grade recall and how the models were selected are in [`results/RESULTS.md`](results/RESULTS.md).
+
+| Model | Acc. | Macro-F1 | QWK | MAE | Grade 3–4 Recall | External QWK |
+|---|---|---|---|---|---|---|
+| ResNet-50 + Cross-Entropy | 64.01% | 0.6439 | 0.8056 | 0.4209 | 79.56% | 0.4919 |
+| ResNet-50 + Ordinal Loss (Chen-style) | **66.12%** | **0.6646** | **0.8286** | **0.3859** | 77.37% | **0.5766** |
+| KOA-ORDNet (proposed) | 60.81% | 0.6308 | 0.8090 | 0.4336 | 79.56% | 0.5052 |
+
+In this run KOA-ORDNet does not outperform the ordinal-loss baseline; it raises KL 1 recall (31% → 47%) and keeps Grade 3–4 recall at the CE baseline's level. All models lose much of their accuracy on the external dataset.
+
+Trained KOA-ORDNet weights: [latest release](https://github.com/abhay93682-lab/KOA-ORDNet/releases/latest) (`koa_ordnet.pt`).
 
 ## Project layout
 
