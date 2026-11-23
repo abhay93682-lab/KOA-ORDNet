@@ -2,8 +2,8 @@
 
     streamlit run app.py
 
-Looks for weights at models/koa_ordnet.pt (copy runs/koa_ordnet/koa/best.pt there),
-or you can upload a checkpoint in the sidebar.
+Looks for weights at models/koa_ordnet.pt; if missing, downloads them from the
+latest GitHub release. You can also upload a checkpoint in the sidebar.
 """
 from __future__ import annotations
 
@@ -22,6 +22,19 @@ from koa_ordnet.model import KOAOrdNet, logits_to_probs
 GRADE_TEXT = {0: "Grade 0 - None", 1: "Grade 1 - Doubtful", 2: "Grade 2 - Minimal",
               3: "Grade 3 - Moderate", 4: "Grade 4 - Severe"}
 DEFAULT_WEIGHTS = Path("models/koa_ordnet.pt")
+# Trained weights published as a GitHub release asset; downloaded once on first run.
+WEIGHTS_URL = "https://github.com/abhay93682-lab/KOA-ORDNet/releases/latest/download/koa_ordnet.pt"
+
+
+def ensure_weights() -> None:
+    if DEFAULT_WEIGHTS.exists():
+        return
+    DEFAULT_WEIGHTS.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with st.spinner("Downloading trained model (~95 MB, first run only)..."):
+            torch.hub.download_url_to_file(WEIGHTS_URL, str(DEFAULT_WEIGHTS), progress=False)
+    except Exception:
+        DEFAULT_WEIGHTS.unlink(missing_ok=True)
 
 st.set_page_config(page_title="KOA-ORDNet", page_icon="🦵", layout="centered")
 st.title("KOA-ORDNet")
@@ -39,6 +52,7 @@ def load_model(data: bytes | None):
     return m.eval(), c["head"]
 
 
+ensure_weights()
 up_ckpt = st.sidebar.file_uploader("Model checkpoint (.pt)", type=["pt"])
 model, head = load_model(up_ckpt.getvalue() if up_ckpt else None)
 if model is None:
