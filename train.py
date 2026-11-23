@@ -41,7 +41,7 @@ def predict(model, loader, head, device):
 def main(cfg: Config):
     seed_all(cfg.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    out = Path(cfg.out_dir) / cfg.loss
+    out = Path(cfg.out_dir) / (cfg.extra.get("name") or cfg.loss)
     out.mkdir(parents=True, exist_ok=True)
 
     tr_items = list_split(cfg.data_dir, "train", cfg.limit_per_class)
@@ -97,6 +97,9 @@ if __name__ == "__main__":
     ap.add_argument("--workers", type=int, default=Config.num_workers)
     ap.add_argument("--limit-per-class", type=int, default=None)
     ap.add_argument("--no-pretrained", action="store_true")
+    ap.add_argument("--gamma", type=float, default=Config.focal_gamma, help="focal gamma (koa loss)")
+    ap.add_argument("--name", default=None, help="run folder name (default: the loss name)")
     a = ap.parse_args()
     main(Config(data_dir=a.data, out_dir=a.out, loss=a.loss, max_epochs=a.epochs, batch_size=a.batch_size,
-                num_workers=a.workers, limit_per_class=a.limit_per_class, pretrained=not a.no_pretrained))
+                num_workers=a.workers, limit_per_class=a.limit_per_class, pretrained=not a.no_pretrained,
+                focal_gamma=a.gamma, extra={"name": a.name}))

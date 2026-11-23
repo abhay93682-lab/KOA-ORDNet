@@ -57,8 +57,21 @@ def main(a):
     test_items = list_split(a.data, "test", a.limit_per_class)
     ext_items = list_split(a.external, None, a.limit_per_class) if a.external else None
     results = {}
-    for key in ("ce", "ordinal", "koa"):
-        ckpt = Path(a.runs) / key / "best.pt"
+
+    def best_val_f1(run_dir: Path) -> float:
+        h = run_dir / "history.json"
+        return max(e["macro_f1"] for e in json.loads(h.read_text())) if h.exists() else -1.0
+
+    # KOA-ORDNet model selection uses the VALIDATION set only: among runs/koa* (e.g. different
+    # focal gamma), the run with the best validation macro-F1 is the one evaluated on test.
+    koa_runs = sorted(d for d in Path(a.runs).glob("koa*") if (d / "best.pt").exists())
+    selection = {d.name: best_val_f1(d) for d in koa_runs}
+    koa_dir = max(koa_runs, key=best_val_f1).name if koa_runs else "koa"
+    if selection:
+        print("KOA-ORDNet runs (best val macro-F1):", selection, "-> selected", koa_dir)
+
+    for key, run in (("ce", "ce"), ("ordinal", "ordinal"), ("koa", koa_dir)):
+        ckpt = Path(a.runs) / run / "best.pt"
         if not ckpt.exists():
             print(f"skip {key}: {ckpt} not found")
             continue
@@ -68,6 +81,9 @@ def main(a):
         if ext_items:
             r["out_of_distribution"] = compute_metrics(*predict(model, dl(ext_items), head, device))
         r["gradcam_iou"], r["gradcam_n"] = gradcam_iou(model, test_items, device)
+        r["run"], r["best_val_macro_f1"] = run, best_val_f1(Path(a.runs) / run)
+        if key == "koa":
+            r["koa_val_selection"] = selection
         results[key] = r
         print(key, json.dumps({k: r["in_distribution"][k] for k in ("accuracy", "macro_f1", "qwk", "mae", "grade34_recall")}))
 
