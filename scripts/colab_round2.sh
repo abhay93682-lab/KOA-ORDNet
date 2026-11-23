@@ -21,6 +21,9 @@ root = Path(kagglehub.dataset_download('tommyngx/digital-knee-xray'))
 print(next(str(p) for p in root.rglob('MedicalExpert-I') if p.is_dir()))
 EOF
 )
+DATA=$(printf "%s
+" "$DATA" | tail -n 1); EXT=$(printf "%s
+" "$EXT" | tail -n 1)
 echo "DATA=$DATA"; echo "EXT=$EXT"
 
 [ -d "$SAVE/results_round1" ] || { [ -d results ] && cp -r results "$SAVE/results_round1" || true; }
