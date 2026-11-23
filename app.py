@@ -84,7 +84,7 @@ if data:
     if true_grade is not None:
         st.caption(f"Expert label for this sample: {GRADE_TEXT[true_grade]}")
     c1, c2 = st.columns(2)
-    c1.image(cv2.resize(gray, (224, 224)), caption="Input", use_container_width=True)
-    c2.image(overlay(cv2.resize(gray, (224, 224)), cam), caption="Grad-CAM (box = joint region)", use_container_width=True)
+    c1.image(cv2.resize(gray, (224, 224)), caption="Input", width="stretch")
+    c2.image(overlay(cv2.resize(gray, (224, 224)), cam), caption="Grad-CAM (box = joint region)", width="stretch")
     st.metric("Grad-CAM IoU with joint region", f"{cam_iou(cam):.2f}")
     st.bar_chart({f"KL {k}": float(p) for k, p in enumerate(probs)})
