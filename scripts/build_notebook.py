@@ -62,3 +62,66 @@ out = Path(__file__).resolve().parents[1] / "notebooks" / "koa_ordnet_kaggle.ipy
 out.parent.mkdir(exist_ok=True)
 out.write_text(json.dumps(nb, indent=1))
 print("wrote", out)
+
+# ---------------- Google Colab version ----------------
+colab_cells = [
+    ("markdown", """# KOA-ORDNet: training on Google Colab
+
+1. **Runtime → Change runtime type → T4 GPU → Save**
+2. **Runtime → Run all**. Allow Google Drive access when asked: checkpoints and results are saved to
+   `MyDrive/KOA-ORDNet`, so nothing is lost if Colab disconnects.
+
+Each model takes about 1–2 hours on a T4. Free Colab sessions can stop after a few hours: if that happens,
+run all again and finished models are skipped automatically."""),
+    ("code", """import torch
+assert torch.cuda.is_available(), 'Turn on GPU: Runtime -> Change runtime type -> T4 GPU'
+print('GPU:', torch.cuda.get_device_name(0))"""),
+    ("code", """from google.colab import drive
+drive.mount('/content/drive')
+SAVE = '/content/drive/MyDrive/KOA-ORDNet'
+import os; os.makedirs(SAVE, exist_ok=True); print('Saving to', SAVE)"""),
+    ("code", """!rm -rf /content/KOA-ORDNet
+!git clone -q https://github.com/abhay93682-lab/KOA-ORDNet /content/KOA-ORDNet
+%cd /content/KOA-ORDNet
+!pip install -q opencv-python-headless scikit-learn kagglehub"""),
+    ("code", """# Download the Chen (2018) dataset from Kaggle (public, CC BY 4.0)
+import kagglehub
+from pathlib import Path
+root = kagglehub.dataset_download('shashwatwork/knee-osteoarthritis-dataset-with-severity')
+DATA = None
+for p in sorted(Path(root).rglob('train')):
+    if p.is_dir() and all((p / str(g)).is_dir() for g in range(5)) and (p.parent / 'test').is_dir():
+        DATA = str(p.parent); break
+assert DATA, f'Dataset layout not found under {root}'
+print('DATA =', DATA)
+for s in ('train', 'val', 'test'):
+    print(s, [len(list((Path(DATA) / s / str(g)).glob('*'))) for g in range(5)])"""),
+    ("markdown", "## Train the three models (skips any model already finished in Drive)"),
+    ("code", """import os, subprocess
+RUNS = f'{SAVE}/runs'
+for loss in ['ce', 'ordinal', 'koa']:
+    if os.path.exists(f'{RUNS}/{loss}/history.json'):
+        print(f'== {loss}: already trained, skipping'); continue
+    print(f'== training {loss}')
+    !python train.py --data "$DATA" --out "$RUNS" --loss $loss --workers 2"""),
+    ("markdown", "## Evaluate: Table II and Grad-CAM IoU, from the trained checkpoints"),
+    ("code", """!python evaluate.py --data "$DATA" --runs "$RUNS" --workers 2
+!cp -r results "$SAVE"/
+!cp "$RUNS"/koa/best.pt "$SAVE"/koa_ordnet.pt
+print(open('results/RESULTS.md').read())
+print('Saved in Google Drive:', SAVE)"""),
+]
+colab = {
+    "cells": [
+        {"cell_type": t, "metadata": {}, "source": s.splitlines(keepends=True),
+         **({"outputs": [], "execution_count": None} if t == "code" else {})}
+        for t, s in colab_cells
+    ],
+    "metadata": {"kernelspec": {"display_name": "Python 3", "name": "python3"},
+                 "language_info": {"name": "python"}, "accelerator": "GPU",
+                 "colab": {"provenance": [], "gpuType": "T4"}},
+    "nbformat": 4, "nbformat_minor": 5,
+}
+out = Path(__file__).resolve().parents[1] / "notebooks" / "koa_ordnet_colab.ipynb"
+out.write_text(json.dumps(colab, indent=1))
+print("wrote", out)
