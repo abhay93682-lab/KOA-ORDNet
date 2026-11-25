@@ -40,12 +40,17 @@ def list_split(root: str | Path, split: str | None, limit_per_class: int | None 
     return items
 
 
-def preprocess(gray: np.ndarray, size: int = 224) -> np.ndarray:
-    """Grayscale uint8 -> CLAHE -> resize -> 3ch float normalized (H, W, 3)."""
+def clahe_resized(gray: np.ndarray, size: int = 224) -> np.ndarray:
+    """Grayscale uint8 -> resize -> CLAHE (uint8, H x W). This is what the network sees."""
     if gray.ndim == 3:
         gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
     gray = cv2.resize(gray, (size, size), interpolation=cv2.INTER_AREA)
-    gray = _clahe.apply(gray)
+    return _clahe.apply(gray)
+
+
+def preprocess(gray: np.ndarray, size: int = 224) -> np.ndarray:
+    """Grayscale uint8 -> CLAHE -> resize -> 3ch float normalized (H, W, 3)."""
+    gray = clahe_resized(gray, size)
     rgb = np.repeat(gray[..., None], 3, axis=2).astype(np.float32) / 255.0
     return (rgb - IMAGENET_MEAN) / IMAGENET_STD
 
