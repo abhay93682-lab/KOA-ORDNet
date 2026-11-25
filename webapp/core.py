@@ -7,6 +7,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 import sys
@@ -120,7 +121,7 @@ def analyze(data: bytes, filename: str, expert_grade: int | None = None) -> Anal
     return Analysis(
         id=uuid.uuid4().hex[:8].upper(),
         filename=filename,
-        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        timestamp=datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST"),
         grade=int(grade),
         confidence=float(probs[grade]),
         probs=[float(p) for p in probs],
