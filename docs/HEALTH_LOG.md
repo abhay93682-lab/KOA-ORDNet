@@ -9,3 +9,4 @@ Daily CI run: unit tests + 1-epoch smoke training on synthetic data.
 | 2026-11-25 | 3.12 | 2.15.0+cpu | 8 passed in 12.87s |
 | 2026-11-26 | 3.12 | 2.15.0+cpu | 8 passed in 12.03s |
 | 2026-11-27 | 3.12 | 2.15.0+cpu | 8 passed in 7.32s |
+| 2026-11-28 | 3.12 | 2.15.0+cpu | 8 passed in 9.06s |
